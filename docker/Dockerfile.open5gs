@@ -1,0 +1,83 @@
+# Dockerfile.open5gs — Build-from-source following OCUDU's official approach
+# Reference: ocudu/docker/open5gs/Dockerfile
+#
+# Key difference from official: MongoDB runs as a standalone container
+# (not embedded), so we skip mongod install and the WebUI.
+
+ARG OS_VERSION=22.04
+FROM ubuntu:$OS_VERSION AS base
+
+ENV PYTHONBUFFERED=1
+ARG DEBIAN_FRONTEND=noninteractive
+
+# 1. Build dependencies (matches OCUDU's official list)
+RUN apt-get update \
+    && apt install -y software-properties-common \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update \
+    && apt-get install -y \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    ninja-build \
+    build-essential \
+    flex \
+    bison \
+    git \
+    libsctp-dev \
+    libgnutls28-dev \
+    libgcrypt-dev \
+    libssl-dev \
+    libidn11-dev \
+    libmongoc-dev \
+    libbson-dev \
+    libyaml-dev \
+    libnghttp2-dev \
+    libmicrohttpd-dev \
+    libcurl4-gnutls-dev \
+    libtins-dev \
+    meson \
+    curl \
+    gettext \
+    iproute2 \
+    nftables \
+    iputils-ping \
+    netcat-openbsd \
+    iperf \
+    iperf3 \
+    libtalloc-dev \
+    cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Clone and build Open5GS v2.7.6 from source (official approach)
+ARG OPEN5GS_VERSION=v2.7.6
+ARG NUM_JOBS=""
+RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
+    && git clone --depth 1 --branch $OPEN5GS_VERSION \
+       https://github.com/open5gs/open5gs open5gs \
+    && cd open5gs \
+    && meson build --prefix=$(pwd)/install \
+    && ninja -j ${NUM_JOBS} -C build \
+    && cd build \
+    && ninja install
+
+# 3. Python dependencies (matches OCUDU official + pyroute2 for setup_tun.py)
+RUN python3 -m pip install pymongo click pyroute2 ipaddress bson
+
+# --- Final stage ---
+FROM base AS open5gs
+
+WORKDIR /open5gs
+
+# 4. Copy config template, entrypoint, and provisioning scripts
+COPY configs/open5gs-5gc.yml open5gs-5gc.yml.in
+COPY configs/open5gs_entrypoint.sh ./open5gs_entrypoint.sh
+COPY configs/setup_tun.py ./setup_tun.py
+COPY configs/add_users.py ./add_users.py
+RUN chmod +x ./open5gs_entrypoint.sh
+
+# 5. Add built binaries to PATH (official pattern — 5gc binary lives here)
+ENV PATH="${PATH}:/open5gs/build/tests/app/"
+
+ENTRYPOINT ["./open5gs_entrypoint.sh"]

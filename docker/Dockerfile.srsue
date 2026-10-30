@@ -1,0 +1,49 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:22.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    git \
+    pkg-config \
+    libfftw3-dev \
+    libmbedtls-dev \
+    libboost-program-options-dev \
+    libconfig++-dev \
+    libsctp-dev \
+    libzmq3-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 https://github.com/srsRAN/srsRAN_4G.git /src/srsRAN_4G && \
+    mkdir -p /src/srsRAN_4G/build && \
+    cd /src/srsRAN_4G/build && \
+    cmake .. -DENABLE_ZEROMQ=ON && \
+    make -j$(nproc) srsue && \
+    make install
+
+FROM ubuntu:22.04 AS runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libfftw3-single3 \
+    libfftw3-double3 \
+    libmbedtls-dev \
+    libboost-program-options-dev \
+    libconfig++-dev \
+    libsctp-dev \
+    libzmq3-dev \
+    iproute2 \
+    iputils-ping \
+    iperf3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
+COPY --from=builder /usr/local/bin/srsue /usr/local/bin/srsue
+RUN ldconfig
+
+ENTRYPOINT ["srsue"]

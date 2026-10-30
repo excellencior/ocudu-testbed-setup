@@ -1,0 +1,37 @@
+# === OCUDU Official Repo (clone separately) ===
+ocudu/
+
+# === Visualizer (separate project) ===
+visualizer/
+
+# === Artifacts & Docs (generated, not part of setup) ===
+artifacts/
+
+# === IDE / Editor ===
+.vscode/
+.idea/
+
+# === Agent / AI ===
+.gemini/
+
+# === Generated HTML files ===
+*.html
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# === Docker ===
+.docker/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+*~
+
+# === Environment ===
+.env
+.env.*

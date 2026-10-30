@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1
+FROM ubuntu:24.04 AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build dependencies specified in OCUDU Handbook Part 4
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    pkg-config \
+    libfftw3-dev \
+    libmbedtls-dev \
+    libsctp-dev \
+    libyaml-cpp-dev \
+    libgtest-dev \
+    libzmq3-dev \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src/ocudu
+COPY ocudu/ /src/ocudu/
+
+# Build monolithic gNB with ZeroMQ virtual radio enabled
+RUN mkdir -p build && cd build && \
+    cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON && \
+    make -j$(nproc) gnb
+
+FROM ubuntu:24.04 AS runner
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libfftw3-single3 \
+    libfftw3-double3 \
+    libmbedcrypto7t64 \
+    libmbedx509-1t64 \
+    libmbedtls14t64 \
+    libsctp1 \
+    libyaml-cpp0.8 \
+    libzmq5 \
+    iproute2 \
+    iputils-ping \
+    net-tools \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/ocudu
+COPY --from=builder /src/ocudu/build/apps/gnb/gnb /usr/local/bin/gnb
+
+ENTRYPOINT ["gnb"]
