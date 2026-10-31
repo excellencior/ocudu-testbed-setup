@@ -63,7 +63,7 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=4; fi \
     && ninja install
 
 # 3. Python dependencies (matches OCUDU official + pyroute2 for setup_tun.py)
-RUN python3 -m pip install pymongo click pyroute2 ipaddress
+RUN python3 -m pip install pymongo click pyroute2 ipaddress pyyaml
 
 # --- Final stage ---
 FROM base AS open5gs

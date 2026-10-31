@@ -57,15 +57,36 @@ then
 fi
 echo "TUN interface and NAT configured."
 
-# 8. Provision subscriber data (official add_users.py)
-echo "SUBSCRIBER_DB=${SUBSCRIBER_DB}"
-python3 add_users.py --mongodb ${MONGODB_HOST} --subscriber_data ${SUBSCRIBER_DB}
-if [ $? -ne 0 ]
-then
-    echo "Failed to add subscribers to database"
-    exit 1
+# 8. Provision subscriber data from YAML file or env var fallback
+SUBSCRIBERS_FILE="/open5gs/subscribers.yml"
+if [ -f "${SUBSCRIBERS_FILE}" ]; then
+    echo "Loading subscribers from ${SUBSCRIBERS_FILE}..."
+    python3 -c "
+import yaml, subprocess, sys
+with open('${SUBSCRIBERS_FILE}') as f:
+    data = yaml.safe_load(f)
+for s in data.get('subscribers', []):
+    entry = '{imsi},{k},opc,{opc},{amf},{qci},{ip}'.format(**s)
+    print(f'  Provisioning IMSI {s[\"imsi\"]}...')
+    r = subprocess.run(['python3', 'add_users.py', '--mongodb', '${MONGODB_HOST}', '--subscriber_data', entry])
+    if r.returncode != 0:
+        sys.exit(1)
+"
+    if [ $? -ne 0 ]; then
+        echo "Failed to add subscribers from YAML"
+        exit 1
+    fi
+elif [ -n "${SUBSCRIBER_DB}" ]; then
+    echo "Loading subscriber from SUBSCRIBER_DB env var..."
+    python3 add_users.py --mongodb ${MONGODB_HOST} --subscriber_data ${SUBSCRIBER_DB}
+    if [ $? -ne 0 ]; then
+        echo "Failed to add subscribers to database"
+        exit 1
+    fi
+else
+    echo "WARNING: No subscriber data found (no YAML file or SUBSCRIBER_DB env var)"
 fi
-echo "Subscriber provisioned."
+echo "Subscriber provisioning complete."
 
 # 9. (SKIP) WebUI — not needed, subscribers provisioned via add_users.py
 #    Official entrypoint runs: cd webui && npm run dev &
