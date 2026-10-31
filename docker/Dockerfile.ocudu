@@ -24,9 +24,11 @@ WORKDIR /src/ocudu
 COPY ocudu/ /src/ocudu/
 
 # Build monolithic gNB with ZeroMQ virtual radio enabled
+# Cap at 4 parallel jobs to prevent OOM on machines with <16 GB RAM
+ARG MAX_JOBS=4
 RUN mkdir -p build && cd build && \
     cmake .. -DENABLE_EXPORT=ON -DENABLE_ZEROMQ=ON && \
-    make -j$(nproc) gnb
+    make -j${MAX_JOBS} gnb
 
 FROM ubuntu:24.04 AS runner
 

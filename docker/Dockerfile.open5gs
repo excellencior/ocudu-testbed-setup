@@ -52,8 +52,8 @@ RUN apt-get update \
 
 # 2. Clone and build Open5GS v2.7.6 from source (official approach)
 ARG OPEN5GS_VERSION=v2.7.6
-ARG NUM_JOBS=""
-RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi \
+ARG NUM_JOBS=4
+RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=4; fi \
     && git clone --depth 1 --branch $OPEN5GS_VERSION \
        https://github.com/open5gs/open5gs open5gs \
     && cd open5gs \

@@ -1,4 +1,10 @@
 # syntax=docker/dockerfile:1
+# Dockerfile.srsue — Build srsRAN 4G srsUE with ZMQ support
+#
+# IMPORTANT: Build parallelism is capped at 4 jobs to prevent OOM.
+# srsRAN compilation is memory-hungry (~1-2 GB per job).
+# Adjust MAX_JOBS if your machine has more/less RAM.
+
 FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -17,33 +23,45 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Cap parallelism at 4 jobs max to avoid OOM on machines with <16 GB RAM.
+# Each srsRAN compile job uses ~1-2 GB of RAM.
+ARG MAX_JOBS=4
+
 RUN git clone --depth 1 https://github.com/srsRAN/srsRAN_4G.git /src/srsRAN_4G && \
     mkdir -p /src/srsRAN_4G/build && \
     cd /src/srsRAN_4G/build && \
     cmake .. -DENABLE_ZEROMQ=ON && \
-    make -j$(nproc) srsue && \
-    make install
+    make -j${MAX_JOBS} srsue && \
+    # Install only srsue target (not the full project)
+    cmake -DCOMPONENT=srsue -P cmake_install.cmake && \
+    # Clean build artifacts to reduce layer size
+    rm -rf /src/srsRAN_4G/build/lib /src/srsRAN_4G/build/CMakeFiles
 
+# --- Minimal runtime image ---
 FROM ubuntu:22.04 AS runner
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Runtime dependencies only (not -dev packages where possible)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libfftw3-single3 \
     libfftw3-double3 \
-    libmbedtls-dev \
-    libboost-program-options-dev \
-    libconfig++-dev \
-    libsctp-dev \
-    libzmq3-dev \
+    libmbedcrypto7 \
+    libmbedtls14 \
+    libmbedx509-1 \
+    libboost-program-options1.74.0 \
+    libconfig++9v5 \
+    libsctp1 \
+    libzmq5 \
     iproute2 \
     iputils-ping \
     iperf3 \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/lib/ /usr/local/lib/
+# Copy only srsue binary and its specific shared libraries
 COPY --from=builder /usr/local/bin/srsue /usr/local/bin/srsue
+COPY --from=builder /usr/local/lib/srsran/ /usr/local/lib/srsran/
 RUN ldconfig
 
 ENTRYPOINT ["srsue"]
