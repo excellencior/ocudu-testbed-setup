@@ -27,6 +27,8 @@ services:
       - NETWORK_NAME_SHORT=OCUDU
     volumes:
       - ./configs/subscribers.yml:/open5gs/subscribers.yml:ro
+      - ./configs/add_users.py:/open5gs/add_users.py:ro
+      - ./configs/open5gs_entrypoint.sh:/open5gs/open5gs_entrypoint.sh:ro
     command: 5gc -c open5gs-5gc.yml
     depends_on:
       - mongodb

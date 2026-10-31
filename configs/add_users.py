@@ -134,6 +134,32 @@ def read_from_string(sub_data):
     return subscriber_db
 
 
+def read_from_yaml(yaml_file):
+    """Read UE data from a subscribers.yml file."""
+    try:
+        import yaml
+        with open(yaml_file, "r") as f:
+            data = yaml.safe_load(f)
+    except Exception as e:
+        print(f"Error reading YAML file {yaml_file}: {e}")
+        return None
+
+    subscriber_db = []
+    for s in data.get("subscribers", []):
+        subscriber_db.append(
+            {
+                "imsi": str(s.get("imsi")),
+                "key": str(s.get("k", "00112233445566778899aabbccddeeff")),
+                "op": str(s.get("op")) if s.get("op") else None,
+                "opc": str(s.get("opc")) if s.get("opc") else None,
+                "amf": str(s.get("amf", "8000")),
+                "qci": str(s.get("qci", "9")),
+                "ip_alloc": str(s.get("ip", "")),
+            }
+        )
+    return subscriber_db
+
+
 @click.command()
 # Modified: default points to standalone MongoDB container (not localhost)
 @click.option("--mongodb", default="10.53.1.20", help="IP address or hostname of the mongodb instance.")
@@ -150,6 +176,9 @@ def main(mongodb, mongodb_port, subscriber_data):
     if subscriber_data.endswith(".csv"):
         print("Reading subscriber data from csv-file.")
         subscriber_db = read_from_db(subscriber_data)
+    elif subscriber_data.endswith(".yml") or subscriber_data.endswith(".yaml"):
+        print("Reading subscriber data from yaml-file.")
+        subscriber_db = read_from_yaml(subscriber_data)
     else:
         print("Reading subscriber data from cmd.")
         subscriber_db = read_from_string(subscriber_data)
@@ -158,15 +187,17 @@ def main(mongodb, mongodb_port, subscriber_data):
         return sys.exit(1)
 
     for ue in subscriber_db:
-        try:
-            sub_data = add_user(**ue)
-            # Add Subscriber using dict of sub_data
-            print(open5gs_client.AddSubscriber(sub_data))
-        except pymongo.errors.DuplicateKeyError:
+        sub_data = add_user(**ue)
+        existing = open5gs_client.GetSubscriber(ue["imsi"])
+        if existing:
             print(f"UE (IMSI={ue['imsi']}) already exists, updating it.")
-            sub_data = add_user(**ue)
-            # Update Subscriber using dict of sub_data
             print(open5gs_client.UpdateSubscriber(ue["imsi"], sub_data))
+        else:
+            try:
+                print(open5gs_client.AddSubscriber(sub_data))
+            except pymongo.errors.DuplicateKeyError:
+                print(f"UE (IMSI={ue['imsi']}) already exists, updating it.")
+                print(open5gs_client.UpdateSubscriber(ue["imsi"], sub_data))
 
 
 if __name__ == "__main__":

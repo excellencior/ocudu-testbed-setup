@@ -61,24 +61,14 @@ echo "TUN interface and NAT configured."
 SUBSCRIBERS_FILE="/open5gs/subscribers.yml"
 if [ -f "${SUBSCRIBERS_FILE}" ]; then
     echo "Loading subscribers from ${SUBSCRIBERS_FILE}..."
-    python3 -c "
-import yaml, subprocess, sys
-with open('${SUBSCRIBERS_FILE}') as f:
-    data = yaml.safe_load(f)
-for s in data.get('subscribers', []):
-    entry = '{imsi},{k},opc,{opc},{amf},{qci},{ip}'.format(**s)
-    print(f'  Provisioning IMSI {s[\"imsi\"]}...')
-    r = subprocess.run(['python3', 'add_users.py', '--mongodb', '${MONGODB_HOST}', '--subscriber_data', entry])
-    if r.returncode != 0:
-        sys.exit(1)
-"
+    python3 add_users.py --mongodb ${MONGODB_HOST} --subscriber_data "${SUBSCRIBERS_FILE}"
     if [ $? -ne 0 ]; then
         echo "Failed to add subscribers from YAML"
         exit 1
     fi
 elif [ -n "${SUBSCRIBER_DB}" ]; then
     echo "Loading subscriber from SUBSCRIBER_DB env var..."
-    python3 add_users.py --mongodb ${MONGODB_HOST} --subscriber_data ${SUBSCRIBER_DB}
+    python3 add_users.py --mongodb ${MONGODB_HOST} --subscriber_data "${SUBSCRIBER_DB}"
     if [ $? -ne 0 ]; then
         echo "Failed to add subscribers to database"
         exit 1
