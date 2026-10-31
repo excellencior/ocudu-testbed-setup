@@ -32,10 +32,8 @@ RUN git clone --depth 1 https://github.com/srsRAN/srsRAN_4G.git /src/srsRAN_4G &
     cd /src/srsRAN_4G/build && \
     cmake .. -DENABLE_ZEROMQ=ON && \
     make -j${MAX_JOBS} srsue && \
-    # Install only srsue target (not the full project)
-    cmake -DCOMPONENT=srsue -P cmake_install.cmake && \
-    # Clean build artifacts to reduce layer size
-    rm -rf /src/srsRAN_4G/build/lib /src/srsRAN_4G/build/CMakeFiles
+    make install && \
+    rm -rf /src/srsRAN_4G
 
 # --- Minimal runtime image ---
 FROM ubuntu:22.04 AS runner
@@ -59,9 +57,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only srsue binary and its specific shared libraries
+# srsRAN installs libs as libsrsran_*.so directly in /usr/local/lib/
 COPY --from=builder /usr/local/bin/srsue /usr/local/bin/srsue
-COPY --from=builder /usr/local/lib/srsran/ /usr/local/lib/srsran/
+COPY --from=builder /usr/local/lib/ /usr/local/lib/
 RUN ldconfig
 
 ENTRYPOINT ["srsue"]
