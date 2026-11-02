@@ -13,6 +13,9 @@ cu_cp:
             tai_slice_support_list:
               - sst: 1
   inactivity_timer: 7200
+  request_pdu_session_timeout: 30
+  rrc:
+    rrc_procedure_guard_time_ms: 12800
 
 ru_sdr:
   device_driver: zmq
@@ -47,7 +50,7 @@ cell_cfg:
 
 log:
   filename: /tmp/gnb.log
-  all_level: debug
+  all_level: info
   hex_max_size: 0
 
 pcap:

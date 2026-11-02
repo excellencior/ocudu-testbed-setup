@@ -136,16 +136,37 @@ def read_from_string(sub_data):
 
 def read_from_yaml(yaml_file):
     """Read UE data from a subscribers.yml file."""
+    subscribers_raw = []
     try:
         import yaml
         with open(yaml_file, "r") as f:
             data = yaml.safe_load(f)
+        subscribers_raw = data.get("subscribers", []) if data else []
+    except ImportError:
+        import re
+        current = {}
+        with open(yaml_file, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("- "):
+                    if current:
+                        subscribers_raw.append(current)
+                        current = {}
+                    line = line[2:].strip()
+                m = re.match(r'^([a-zA-Z0-9_]+)\s*:\s*["\']?([^"\']*)["\']?$', line)
+                if m:
+                    k, v = m.group(1), m.group(2).strip()
+                    current[k] = v
+        if current:
+            subscribers_raw.append(current)
     except Exception as e:
         print(f"Error reading YAML file {yaml_file}: {e}")
         return None
 
     subscriber_db = []
-    for s in data.get("subscribers", []):
+    for s in subscribers_raw:
         subscriber_db.append(
             {
                 "imsi": str(s.get("imsi")),
