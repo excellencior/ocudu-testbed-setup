@@ -1,0 +1,18 @@
+services:
+  ocudu-sandbox:
+    image: ubuntu@sha256:6a06111c3b0a8600feadb270aec771dc239bf407b25625f93f44ab00e11f4d3c
+    container_name: ocudu-sandbox
+    working_dir: /ocudu
+    volumes:
+      - ./ocudu:/ocudu
+    mem_limit: 24g
+    memswap_limit: 24g
+    command: ["sleep", "infinity"]
+    hostname: "ocudu"
+    networks:
+      - sandboxnet
+
+networks:
+  sandboxnet:
+    name: Sandboxnet
+    driver: bridge
