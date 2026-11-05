@@ -23,7 +23,7 @@ main() {
     local rohc_archive="${rohc_name}-${rohc_version}.tar.xz"
 
     cd /tmp
-    curl "https://rohc-lib.org/download/rohc-${rohc_series}/${rohc_version}/${rohc_archive}" -o "${rohc_archive}"
+    curl -fL "https://github.com/WeirdyBenji/librohc/releases/download/${rohc_name}-${rohc_version}/${rohc_archive}" -o "${rohc_archive}"
     tar -xf "${rohc_archive}"
 
     pushd "${rohc_name}-${rohc_version}"

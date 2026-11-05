@@ -44,6 +44,10 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     /src/docker/scripts/install_dependencies.sh build && \
     /src/docker/scripts/install_docker_dependencies.sh build
 
+RUN apt-get update && \
+    apt-get install -y libzmq3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 #################################
 # Stage 0b: Shared lean base     #
 #################################
@@ -153,8 +157,8 @@ ARG TARGETARCH
 ARG COMPILER=gcc
 ARG EXTRA_CMAKE_ARGS=""
 ARG COMPONENT="ocu ocucp ocuup odu odu_low odu_split_8 odu_split_7_2 gnb gnb_split_8 gnb_split_7_2 ru_emulator"
-ARG ENABLE_UHD=On
-ARG ENABLE_DPDK=On
+ARG ENABLE_UHD=Off
+ARG ENABLE_DPDK=Off
 ARG STRIP_BIN=0
 
 ENV ROHC_DIR=/opt/rohc
@@ -382,6 +386,10 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     /usr/local/etc/install_ocudu_dependencies.sh run && \
     /usr/local/etc/install_rohc_dependencies.sh run && \
     /usr/local/etc/install_docker_dependencies.sh run
+
+RUN apt-get update && \
+    apt-get install -y libzmq5 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Register DPDK/UHD/ROHC library paths for the dynamic linker.
 # When binaries have file capabilities, ld.so enters secure-execution mode and

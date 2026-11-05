@@ -1,0 +1,46 @@
+cu_cp:
+  amf:
+    addrs: 10.53.1.2
+    port: 38412
+    bind_addrs: 10.53.1.1
+    supported_tracking_areas:
+      - tac: 7
+        plmn_list:
+          - plmn: "00101"
+            tai_slice_support_list:
+              - sst: 1
+
+ru_sdr:
+  device_driver: zmq                                                                   # Use ZeroMQ as a virtual RF frontend instead of a physical radio
+  device_args: tx_port=tcp://*:2000,rx_port=tcp://10.53.1.4:2001,base_srate=11.52e6    # DU tx_port and rx_port; tx_port must match srsUE's rx_port, and rx_port must match srsUE's tx_port
+  srate: 11.52                     # Sample rate in MHz, must match base_srate above
+  tx_gain: 0                       # Gain is not used in ZMQ mode
+  rx_gain: 0                       # Gain is not used in ZMQ mode
+
+cell_cfg:
+  dl_arfcn: 368500                 # DL ARFCN corresponding to band 3
+  band: 3                          # FDD band 3, set to match srsUE capabilities
+  channel_bandwidth_MHz: 10        # 10 MHz cell bandwidth, set to match srsUE capabilities
+  common_scs: 15                   # 15 kHz subcarrier spacing, set to match srsUE capabilities
+  plmn: "00101"                    # PLMN, must match the core network and UE subscriber configuration
+  tac: 7                           # Tracking area code, must match the CU-CP configuration
+  pdcch:
+    common:
+      ss0_index: 0                  # Set search space zero index to match srsUE capabilities
+      coreset0_index: 6             # Set search CORESET Zero index to match srsUE capabilities
+    dedicated:
+      ss2_type: common              # Search Space type, has to be set to common
+      dci_format_0_1_and_1_1: false # Set correct DCI format (fallback)
+  prach:
+    prach_config_index: 1           # Sets PRACH config to match what is expected by srsUE
+    total_nof_ra_preambles: 64      # Sets number of available PRACH preambles
+    nof_ssb_per_ro: 1               # Sets the number of SSBs per RACH occasion.
+    nof_cb_preambles_per_ssb: 64    # Sets the number of contention based preambles per SSB.
+  pdsch:
+    mcs_table: qam64                # Sets PDSCH MCS to 64 QAM
+  pusch:
+    mcs_table: qam64                # Sets PUSCH MCS to 64 QAM
+
+log:
+  filename: /tmp/gnb.log
+  all_level: info
