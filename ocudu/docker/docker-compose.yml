@@ -41,6 +41,7 @@ services:
       args:
         OS: ${OS:-ubuntu}
         OS_VERSION: ${OS_VERSION:-26.04}
+        EXTRA_CMAKE_ARGS: "-DENABLE-ZEROMQ=ON"
     # privileged mode is requred only for accessing usb devices
     privileged: true
     # Extra capabilities always required
