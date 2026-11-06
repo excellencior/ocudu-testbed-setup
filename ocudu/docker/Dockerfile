@@ -41,8 +41,12 @@ RUN --mount=type=secret,id=rh_entitlement_cert,target=/etc/pki/entitlement/entit
     --mount=type=secret,id=rh_entitlement_key,target=/etc/pki/entitlement/entitlement-key.pem \
     --mount=type=secret,id=rh_rhsm_conf,target=/etc/rhsm/rhsm.conf \
     --mount=type=secret,id=rh_rhsm_ca,target=/etc/rhsm/ca/redhat-uep.pem \
-    /src/docker/scripts/install_dependencies.sh all && \
+    /src/docker/scripts/install_dependencies.sh build && \
     /src/docker/scripts/install_docker_dependencies.sh build
+
+RUN apt-get update && \
+    apt-get install -y libzmq3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
 #################################
 # Stage 0b: Shared lean base     #

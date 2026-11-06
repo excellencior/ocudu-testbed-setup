@@ -78,7 +78,7 @@ services:
 
 configs:
   gnb_config.yml:
-    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b200_tdd_n78_20mhz.yml} # Path to your desired config file
+    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b210_fdd_srsUE.yml} # Path to your desired config file
   gnb_compose_config.yml:
     content: |
       cu_cp:
