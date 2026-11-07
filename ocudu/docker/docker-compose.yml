@@ -41,7 +41,7 @@ services:
       args:
         OS: ${OS:-ubuntu}
         OS_VERSION: ${OS_VERSION:-26.04}
-        EXTRA_CMAKE_ARGS: "-DENABLE-ZEROMQ=ON"
+        EXTRA_CMAKE_ARGS: "-DENABLE_ZEROMQ=ON"
     # privileged mode is requred only for accessing usb devices
     privileged: true
     # Extra capabilities always required
@@ -76,9 +76,28 @@ services:
     # Command to run into the final container
     command: gnb -c /gnb_config.yml -c /gnb_compose_config.yml
 
+  srsue:
+    container_name: srs_ue
+    build:
+      context: ../../srsRAN-4G
+      dockerfile: ../ocudu/docker/srsue/Dockerfile
+    volumes:
+      - ./srsue/ur_rf.conf:/ue_rf.conf:ro
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      ran:
+        ipv4_address: 10.53.1.4
+    depends_on:
+      gnb:
+        condition: service_started
+    command: srsue /ue_rf.conf
+
 configs:
   gnb_config.yml:
-    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_b210_fdd_srsUE.yml} # Path to your desired config file
+    file: ${GNB_CONFIG_PATH:-../configs/gnb_rf_zmq_srsUE.yml} # Path to your desired config file
   gnb_compose_config.yml:
     content: |
       cu_cp:
