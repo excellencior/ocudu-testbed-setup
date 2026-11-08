@@ -14,12 +14,12 @@ RUN apt-get update \
     libzmq3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /srsRAN-4G
-COPY . .
+WORKDIR /srsRAN_4G
+COPY srsue/srsRAN_4G/ .
 
 RUN mkdir build && \
     cd build && \
-    cmake .. -DENABLE_ZEROMQ=ON && \
-    make -j"$(nproc)" && \
-    make test && \
-    make install
+    cmake ../ -DENABLE_ZEROMQ=ON && \
+    make -j8 srsue && \
+    make install && \
+    ldconfig

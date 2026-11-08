@@ -78,11 +78,12 @@ services:
 
   srsue:
     container_name: srs_ue
+    hostname: srsue
     build:
-      context: ../../srsRAN-4G
-      dockerfile: ../ocudu/docker/srsue/Dockerfile
+      context: .
+      dockerfile: srsue/Dockerfile
     volumes:
-      - ./srsue/ur_rf.conf:/ue_rf.conf:ro
+      - ./srsue/ue_rf.conf:/ue_rf.conf:ro
     cap_add:
       - NET_ADMIN
     devices:
