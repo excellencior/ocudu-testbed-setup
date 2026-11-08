@@ -33,7 +33,7 @@ ARG STRIP_BIN=0
 ################################
 # All OCUDU build bases share the common project and Docker build dependencies.
 # builder-rohc is kept separate: its deps are known to conflict with the DPDK build.
-} AS builder-base-common
+FROM ${OS}:${OS_VERSION} AS builder-base-common
 
 COPY docker/scripts/ /src/docker/scripts/
 
