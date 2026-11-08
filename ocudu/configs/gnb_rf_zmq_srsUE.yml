@@ -1,15 +1,3 @@
-# SPDX-FileCopyrightText: Copyright (C) 2021-2026 Software Radio Systems Limited
-# SPDX-FileCopyrightText: Copyright (C) 2026 OCUDU contributors
-# SPDX-License-Identifier: BSD-3-Clause-Open-MPI
-
-
-# This example configuration outlines how to configure the OCUDU gNB to create a single FDD cell
-# transmitting in band 3, with 20 MHz bandwidth and 15 kHz sub-carrier-spacing. A USRP B200 is configured
-# as the RF frontend using split 8, with a Leo Bodnar GPSDO as an external reference clock.
-
-# This particular configuration is intended to be used with srsUE. Note the `pdcch` parameters set in the
-# `cell_cfg` section. These are set to match the capabilities of srsUE.
-
 cu_cp:
   amf:
     addrs: 10.53.1.2
@@ -23,8 +11,8 @@ cu_cp:
               - sst: 1
 
 ru_sdr:
-  device_driver: zmq                                                                          # Use ZeroMQ as a virtual RF frontend instead of a physical radio
-  device_args: tx_port=tcp://127.0.0.1:2000,rx_port=tcp://127.0.0.1:2001,base_srate=11.52e6    # DU tx_port and rx_port; tx_port must match srsUE's rx_port, and rx_port must match srsUE's tx_port
+  device_driver: zmq                                                                   # Use ZeroMQ as a virtual RF frontend instead of a physical radio
+  device_args: tx_port=tcp://*:2000,rx_port=tcp://10.53.1.4:2001,base_srate=11.52e6    # DU tx_port and rx_port; tx_port must match srsUE's rx_port, and rx_port must match srsUE's tx_port
   srate: 11.52                     # Sample rate in MHz, must match base_srate above
   tx_gain: 0                       # Gain is not used in ZMQ mode
   rx_gain: 0                       # Gain is not used in ZMQ mode
@@ -56,9 +44,3 @@ cell_cfg:
 log:
   filename: /tmp/gnb.log
   all_level: info
-
-pcap:
-  mac_enable: true
-  mac_filename: /tmp/gnb_mac.pcap
-  ngap_enable: true
-  ngap_filename: /tmp/gnb_ngap.pcap
